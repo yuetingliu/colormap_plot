@@ -1,0 +1,8 @@
+# config file for colormap
+range:                             # range of wavenumber
+  - 1500                           # lower range
+  - 2500                           # upper range
+figsize:                           # figure size 
+  - 11.36                          # width
+  - 7.93                           # height 
+font_size: 26                      # font size
