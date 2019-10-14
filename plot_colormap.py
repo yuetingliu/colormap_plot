@@ -16,7 +16,7 @@ rcParams['font.sans-serif'] = ['Arial']
 rcParams['axes.linewidth']=3
 rcParams['mathtext.default']='bf'
 
-# Set fontproperties 
+# Set fontproperties
 from matplotlib.font_manager import FontProperties
 #     font1 = FontProperties()
 #     font1.set_weight('bold')
@@ -40,7 +40,7 @@ def load_excel(fn):
     num_sheets = len(odict)
     # filter real data, some sheet might contain figures
     for sname, df in odict.items():
-        if not df.columns[0] == 'Wavenumber':
+        if (not hasattr(df, 'columns')) or (df.columns[0] != 'Wavenumber'):
             data_odict.pop(sname)
             log.info("Remove non-data sheet '{}'".format(sname))
     log.info("{:d} sheets, {:d} data sheets: {}".format(
@@ -64,17 +64,18 @@ def preprocess(df, lower=None, upper=None):
     -------
     X, Y, Z : tuple of float32
     '''
-    k = df[df['Wavenumber']>=lower]      # Slice the wavenumber range using a, b 
+    k = df[df['Wavenumber']>=lower]      # Slice the wavenumber range using a, b
     k = k[k['Wavenumber']<=upper]
     x = k['Wavenumber']                  # Get X axis
-    y = np.array(df.columns[1:], dtype='float32')  # Get y axis   
+    y = np.array(df.columns[1:], dtype='float32')  # Get y axis
     X, Y= np.meshgrid(x,y)               # Set the grid with meshgrid
-    Z = k.iloc[:, 1:].astype(float)      # Get values and explictly set the data type as float values  
-    Z = Z.T                              # Transpose Z because X and Y are transposed 
+    Z = k.iloc[:, 1:].astype(float)      # Get values and explictly set the data type as float values
+    Z = Z.T                              # Transpose Z because X and Y are transposed
     return X, Y, Z                       # Return X,Y,Z
 
 
-def plot_(X, Y, Z, figsize, font_size= 26, save=True, fn='plot'):
+def plot_(X, Y, Z, figsize, font_size= 26, save=True,
+          fn='plot', vmax=None):
     '''Plot pocolormesh figure,
     X,Y: the axis
     Z: the values
@@ -86,11 +87,11 @@ def plot_(X, Y, Z, figsize, font_size= 26, save=True, fn='plot'):
     font0.set_weight('bold')
 
     fig = plt.figure(figsize=figsize)
-    plt.pcolormesh(X, Y, Z, cmap=plt.cm.jet)
+    plt.pcolormesh(X, Y, Z, cmap=plt.cm.jet, vmax=vmax)
     plt.axis([X.max(), X.min(), Y.min(), Y.max()])
     plt.colorbar()
     plt.xlabel('Wavenumber  /  $cm^{-1}$', fontproperties=font0)
-    plt.ylabel('Time / $min$', fontproperties=font0)
+    plt.ylabel('Time / $s$', fontproperties=font0)
     plt.tick_params(axis='both', labelsize=26, top='off', right='off')
 #   plt.yticks(fontweight='bold')
     if save == True:
@@ -110,7 +111,7 @@ def plot_fl(fl, save=True):
         log.info("Plot sheet {}".format(sn))
         X, Y, Z = preprocess(df, x1, x2)
         save_fn = '{}_{}'.format(fn, sn)
-        plot_(X, Y, Z, figsize, font_size, save=save, fn=save_fn)
+        plot_(X, Y, Z, figsize, font_size, save=save, fn=save_fn, vmax=Z.values.max()*0.85)
 
 
 def main():
@@ -126,7 +127,7 @@ def main():
     fl = sys.argv[1]
     plot_fl(fl)
     log.info("Complete")
-    
+
 
 if __name__ == "__main__":
     main()
